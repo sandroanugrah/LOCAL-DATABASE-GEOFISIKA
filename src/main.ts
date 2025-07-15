@@ -1,9 +1,33 @@
+import helmet from 'helmet';
 import { AppModule } from '@/app.module';
+import rateLimit from 'express-rate-limit';
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.set('trust proxy', 1);
+
+  app.use(helmet());
+
+  app.use(
+    rateLimit({
+      windowMs: 1 * 60 * 1000,
+      max: 50,
+      message: 'Terlalu banyak request, coba lagi nanti',
+    }),
+  );
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   app.enableCors({
     origin: true,

@@ -855,6 +855,8 @@ export class EarthquakeService {
         VIII: 8,
         IX: 9,
         X: 10,
+        XI: 11,
+        XII: 12,
       };
       return map[roman?.toUpperCase()] ?? 0;
     };
