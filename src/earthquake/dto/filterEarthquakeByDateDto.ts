@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, IsNumberString } from 'class-validator';
+import { IsMMI } from './validatorMMI';
 
 export class FilterEarthquakeByDateDto {
   @IsOptional()
@@ -93,19 +94,19 @@ export class FilterEarthquakeByDateDto {
   max_long?: string;
 
   @IsOptional()
-  @IsNumberString()
+  @IsMMI({ message: 'min_mmi must be number (1–12) or Roman numeral (I–XII)' })
   @ApiProperty({
-    description: 'Nilai minimum mmi gempa',
+    description: 'Nilai minimum mmi gempa (angka atau Romawi)',
     example: 'I',
     required: false,
   })
   min_mmi?: string;
 
   @IsOptional()
-  @IsNumberString()
+  @IsMMI({ message: 'max_mmi must be number (1–12) or Roman numeral (I–XII)' })
   @ApiProperty({
-    description: 'Nilai maksimum mmi gempa',
-    example: 'X',
+    description: 'Nilai maksimum mmi gempa (angka atau Romawi)',
+    example: 'XII',
     required: false,
   })
   max_mmi?: string;
