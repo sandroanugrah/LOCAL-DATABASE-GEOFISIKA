@@ -2,7 +2,6 @@ import helmet from 'helmet';
 import { AppModule } from '@/app.module';
 import rateLimit from 'express-rate-limit';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
@@ -18,14 +17,6 @@ async function bootstrap() {
       windowMs: 1 * 60 * 1000,
       max: 50,
       message: 'Terlalu banyak request, coba lagi nanti',
-    }),
-  );
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
     }),
   );
 

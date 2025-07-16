@@ -9,6 +9,7 @@ import {
   Query,
   Delete,
   Controller,
+  BadRequestException,
 } from '@nestjs/common';
 
 import { RainfallService } from '@/rainfall/rainfall.service';
@@ -31,6 +32,12 @@ export class RainfallController {
     @Query('user_id') userId: string,
     @Body() dto: CreateRainfallDto,
   ) {
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+      throw new BadRequestException(
+        'user_id wajib diisi sebagai query param dan harus berupa string',
+      );
+    }
+
     const ipAddress = req.ip as string;
     const userAgent = req.headers['user-agent'] as string;
 
