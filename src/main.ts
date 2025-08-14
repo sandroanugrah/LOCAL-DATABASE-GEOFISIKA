@@ -21,7 +21,9 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    // origin: true,
+    // origin: true
+    // dikasih komen jika error
+
     origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     // credentials: true,
