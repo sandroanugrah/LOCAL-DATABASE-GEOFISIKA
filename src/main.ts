@@ -21,9 +21,12 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: true,
+    // origin: true
+    // dikasih komen jika biar ga error ya
+
+    origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
+    // credentials: true,
   });
 
   const config = new DocumentBuilder()
@@ -63,6 +66,7 @@ async function bootstrap() {
     customfavIcon: 'https://img.icons8.com/fluency/48/api.png',
   });
 
-  await app.listen(3000, '0.0.0.0');
+  // await app.listen(3000, '0.0.0.0')
+  await app.listen(process.env.PORT || 3000);
 }
 bootstrap();
