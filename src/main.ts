@@ -1,17 +1,17 @@
-import helmet from 'helmet';
 import { AppModule } from '@/app.module';
-import rateLimit from 'express-rate-limit';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
-async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+export default async function handler(req: any, res: any) {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: true,
+  });
 
   app.set('trust proxy', 1);
-
   app.use(helmet());
-
   app.use(
     rateLimit({
       windowMs: 1 * 60 * 1000,
@@ -41,21 +41,17 @@ async function bootstrap() {
         .swagger-ui .topbar {
             display: none;
         }
-
         ::-webkit-scrollbar {
             width: 10px;
         }
-
         ::-webkit-scrollbar-track {
             background:rgb(255, 255, 255);
             border-radius: 8px;
         }
-
         ::-webkit-scrollbar-thumb {
             background: linear-gradient(180deg, #1abc9c, #00bcd4);
             border-radius: 8px;
         }
-
         ::-webkit-scrollbar-thumb:hover {
             background: linear-gradient(180deg, #16a085, #0097a7);
         }
@@ -63,6 +59,6 @@ async function bootstrap() {
     customfavIcon: 'https://img.icons8.com/fluency/48/api.png',
   });
 
-  await app.listen(3000, '0.0.0.0');
+  await app.init();
+  app.getHttpAdapter().getInstance()(req, res);
 }
-bootstrap();
