@@ -18,6 +18,11 @@ export declare class EarthquakeController {
     } | {
         success: boolean;
         message: string;
+        error?: undefined;
+        data?: undefined;
+    } | {
+        success: boolean;
+        message: string;
         error: string;
         data?: undefined;
     } | {
@@ -51,6 +56,11 @@ export declare class EarthquakeController {
         success: boolean;
         message: string;
         error: import("@supabase/postgrest-js").PostgrestError | undefined;
+        data?: undefined;
+    } | {
+        success: boolean;
+        message: string;
+        error?: undefined;
         data?: undefined;
     } | {
         success: boolean;

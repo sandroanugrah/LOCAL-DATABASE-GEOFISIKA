@@ -32,6 +32,36 @@ let EarthquakeService = class EarthquakeService {
         }
         this.supabase = (0, supabase_js_1.createClient)(supabaseUrl, supabaseKey);
     }
+    async isDuplicateEarthquake(data) {
+        try {
+            const date = typeof data.date_time === 'string'
+                ? new Date(data.date_time)
+                : data.date_time;
+            const { magnitude, depth, latitude, longitude } = data;
+            const startTime = new Date(date.getTime() - 5000).toISOString();
+            const endTime = new Date(date.getTime() + 5000).toISOString();
+            const { data: existing, error } = await this.supabase
+                .from('earthquake')
+                .select('id')
+                .gte('date_time', startTime)
+                .lte('date_time', endTime)
+                .eq('magnitude', magnitude)
+                .eq('depth', depth)
+                .eq('latitude', latitude)
+                .eq('longitude', longitude)
+                .limit(1)
+                .maybeSingle();
+            if (error) {
+                console.error('Error checking duplicate earthquake:', error);
+                return false;
+            }
+            return !!existing;
+        }
+        catch (err) {
+            console.error('Unexpected error checking duplicate earthquake:', err);
+            return false;
+        }
+    }
     async getAdminData(user_id) {
         const { data, error } = await this.supabase
             .from('admin')
@@ -160,6 +190,19 @@ let EarthquakeService = class EarthquakeService {
         }
         const { first_name, last_name } = adminResponse.data;
         const namaAdmin = `${first_name} ${last_name}`;
+        const isDuplicate = await this.isDuplicateEarthquake({
+            date_time,
+            magnitude,
+            depth,
+            latitude,
+            longitude,
+        });
+        if (isDuplicate) {
+            return {
+                success: false,
+                message: '⚠️ Gagal menambahkan data karena data duplikat.',
+            };
+        }
         const { data: insertedEarthquake, error: earthquakeError } = await this.supabase
             .from('earthquake')
             .insert({
@@ -210,6 +253,19 @@ let EarthquakeService = class EarthquakeService {
         const { first_name, last_name } = adminResponse.data;
         const namaAdmin = `${first_name} ${last_name}`;
         const { magnitude, date_time, latitude, longitude, depth, description, mmi, observerName, } = this.parseEarthquakeInput(input);
+        const isDuplicate = await this.isDuplicateEarthquake({
+            date_time,
+            magnitude,
+            depth,
+            latitude,
+            longitude,
+        });
+        if (isDuplicate) {
+            return {
+                success: false,
+                message: '⚠️ Gagal menambahkan data karena data duplikat.',
+            };
+        }
         const { data: insertedEarthquake, error: earthquakeError } = await this.supabase
             .from('earthquake')
             .insert({
@@ -313,58 +369,29 @@ let EarthquakeService = class EarthquakeService {
                 row['nama pengamat']?.toString().toLowerCase() === 'nama pengamat') {
                 return null;
             }
-            if (!row['tanggal']) {
-                console.error('Tanggal tidak ditemukan untuk data:', row);
+            if (!row['tanggal'])
                 return null;
-            }
             const formattedDate = this.formatDateToPostgres(row['tanggal']);
-            if (!formattedDate) {
-                console.error('Tanggal tidak valid:', row['tanggal']);
+            if (!formattedDate)
                 return null;
-            }
             const time = row['waktu'];
-            if (!time) {
-                console.error('waktu tidak valid untuk data:', row);
-                return null;
-            }
             const dateTime = this.gabungTanggalWaktu(formattedDate, time);
-            if (!dateTime) {
-                console.error('Gagal menggabungkan tanggal dan waktu untuk data:', row);
+            if (!dateTime)
                 return null;
-            }
             const mmi = row['mmi'];
-            if (!mmi) {
-                console.error('mmi tidak valid untuk data:', row);
-                return null;
-            }
             const description = row['deskripsi'];
-            if (!description) {
-                console.error('deskripsi tidak valid untuk data:', row);
-                return null;
-            }
-            const depth = row['kedalaman (km)'];
-            if (isNaN(depth)) {
-                console.error('kedalaman tidak valid untuk data:', row);
-                return null;
-            }
-            const latitude = row['lintang'];
-            if (isNaN(latitude)) {
-                console.error('lintang tidak valid untuk data:', row);
-                return null;
-            }
-            const longitude = row['bujur'];
-            if (isNaN(longitude)) {
-                console.error('bujur tidak valid untuk data:', row);
-                return null;
-            }
-            const magnitude = row['magnitudo'];
-            if (isNaN(magnitude)) {
-                console.error('magnitudo tidak valid untuk data:', row);
-                return null;
-            }
+            const depth = Number(row['kedalaman (km)']);
+            const latitude = Number(row['lintang']);
+            const longitude = Number(row['bujur']);
+            const magnitude = Number(row['magnitudo']);
             const observerName = row['nama pengamat'];
-            if (!observerName) {
-                console.error('nama pengamat tidak valid untuk data:', row);
+            if (!mmi ||
+                !description ||
+                isNaN(depth) ||
+                isNaN(latitude) ||
+                isNaN(longitude) ||
+                isNaN(magnitude) ||
+                !observerName) {
                 return null;
             }
             return {
@@ -385,10 +412,26 @@ let EarthquakeService = class EarthquakeService {
                 message: 'Tidak ada data valid untuk disimpan',
             };
         }
-        const { data: earthquakeEvaporation, error: earthquakeError } = await this.supabase
-            .from('earthquake')
-            .insert(dataWithFormattedDate)
-            .select();
+        const nonDuplicateData = [];
+        for (const item of dataWithFormattedDate) {
+            const isDuplicate = await this.isDuplicateEarthquake({
+                date_time: item.date_time,
+                magnitude: item.magnitude,
+                depth: item.depth,
+                latitude: item.latitude,
+                longitude: item.longitude,
+            });
+            if (!isDuplicate) {
+                nonDuplicateData.push(item);
+            }
+        }
+        if (nonDuplicateData.length === 0) {
+            return {
+                success: false,
+                message: '⚠️ Semua data di file Excel sudah ada di database. Tidak ada data baru yang disimpan.',
+            };
+        }
+        const { data: earthquakeEvaporation, error: earthquakeError } = await this.supabase.from('earthquake').insert(nonDuplicateData).select();
         if (earthquakeError ||
             !earthquakeEvaporation ||
             earthquakeEvaporation.length === 0) {
@@ -411,7 +454,7 @@ let EarthquakeService = class EarthquakeService {
         });
         return {
             success: true,
-            message: 'Berhasil menyimpan data gempa',
+            message: `Berhasil menyimpan ${nonDuplicateData.length} data gempa (duplikat diabaikan)`,
             data: earthquakeEvaporation,
         };
     }

@@ -10,6 +10,7 @@ export declare class EarthquakeService {
     private activityLogService;
     private supabase;
     constructor(configService: ConfigService, activityLogService: ActivityLogService);
+    private isDuplicateEarthquake;
     private getAdminData;
     private decodeBase64ToExcel;
     private parseExcelToData;
@@ -20,6 +21,11 @@ export declare class EarthquakeService {
         success: boolean;
         message: string;
         error: import("@supabase/supabase-js").PostgrestError | undefined;
+        data?: undefined;
+    } | {
+        success: boolean;
+        message: string;
+        error?: undefined;
         data?: undefined;
     } | {
         success: boolean;
@@ -36,6 +42,11 @@ export declare class EarthquakeService {
         success: boolean;
         message: string;
         error: import("@supabase/supabase-js").PostgrestError | undefined;
+        data?: undefined;
+    } | {
+        success: boolean;
+        message: string;
+        error?: undefined;
         data?: undefined;
     } | {
         success: boolean;
